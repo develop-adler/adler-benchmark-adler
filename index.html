@@ -73,10 +73,6 @@
       document.getElementsByTagName("head")[0].appendChild(meta);
       container.className = "adler-mobile";
       canvas.className = "adler-mobile";
-
-      // To lower canvas resolution on mobile devices to gain some
-      // performance, uncomment the following line:
-      // config.devicePixelRatio = 1;
     } else {
       // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
 
@@ -153,7 +149,7 @@
      */
     const loadingManager = new THREE.LoadingManager();
     loadingManager.onProgress = (url, itemsLoaded, itemsTotal) => {
-      if (itemsLoaded / itemsTotal === 1) {
+      if (itemsLoaded / itemsTotal >= 0.98) {
         loadingBar.style.display = "none";
       }
       progressBarFull.style.width = (itemsLoaded / itemsTotal) * 100 + "%";
