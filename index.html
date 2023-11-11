@@ -94,6 +94,8 @@
       }
     };
 
+    loadingBar.style.display = "block";
+
     const scene = new THREE.Scene();
 
     /**
@@ -145,11 +147,9 @@
      */
     const loadingManager = new THREE.LoadingManager();
     loadingManager.onProgress = (url, itemsLoaded, itemsTotal) => {
-      // if (itemsLoaded / itemsTotal === 1) {
-      //   setTimeout(() => {
-      //     loadingBar.style.display = "none";
-      //   }, 1000);
-      // }
+      if (itemsLoaded / itemsTotal === 1) {
+        loadingBar.style.display = "none";
+      }
       progressBarFull.style.width = (itemsLoaded / itemsTotal) * 100 + "%";
     };
 
