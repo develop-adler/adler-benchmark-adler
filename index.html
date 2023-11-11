@@ -3,62 +3,42 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <title>Benchmark Adler</title>
-  <style>
-    html,
-    body {
-      padding: 0;
-      margin: 0;
-      overflow: hidden;
-    }
-
-    .webgl-container {
-      position: absolute;
-    }
-
-    #loadingProgress {
-      position: absolute;
-      top: 0;
-      left: 1%;
-      color: white;
-      font-size: 2rem;
-      z-index: 100;
-    }
-  </style>
+  <link rel="shortcut icon" href="TemplateData/favicon.ico" />
+  <link rel="stylesheet" href="TemplateData/style.css" />
 </head>
 
 <body>
-  <div class="webgl-container">
+  <!-- <div class="webgl-container">
     <h1 id="loadingProgress"></h1>
     <canvas id="webgl"></canvas>
-  </div>
-  
-  <div id="unity-container" class="unity-desktop">
-    <canvas id="unity-canvas" width="960" height="600" tabindex="-1"></canvas>
-    <div id="unity-loading-bar">
-      <div id="unity-logo"></div>
-      <div id="unity-progress-bar-empty">
-        <div id="unity-progress-bar-full"></div>
+  </div> -->
+
+  <div id="adler-container" class="adler-desktop">
+    <canvas id="adler-canvas" width="960" height="600" tabindex="-1"></canvas>
+    <div id="adler-loading-bar">
+      <div id="adler-logo"></div>
+      <div id="adler-progress-bar-empty">
+        <div id="adler-progress-bar-full"></div>
       </div>
     </div>
-    <div id="unity-warning"></div>
-    <div id="unity-footer">
-      <div id="unity-webgl-logo"></div>
-      <div id="unity-fullscreen-button"></div>
-      <div id="unity-build-title">Adler Scene</div>
+    <div id="adler-warning"></div>
+    <div id="adler-footer">
+      <div id="adler-webgl-logo"></div>
+      <div id="adler-fullscreen-button"></div>
+      <div id="adler-build-title">Adler Scene</div>
     </div>
   </div>
 
   <script type="importmap">
       {
         "imports": {
-          "three": "./threejs/build/three.module.min.js",
-          "OrbitControls": "./threejs/examples/jsm/controls/OrbitControls.js",
-          "GLTFLoader": "./threejs/examples/jsm/loaders/GLTFLoader.js",
-          "DRACOLoader": "./threejs/examples/jsm/loaders/DRACOLoader.js",
-          "KTX2Loader": "./threejs/examples/jsm/loaders/KTX2Loader.js"
+          "three": "./adler/build/adler.module.min.js",
+          "OrbitControls": "./adler/examples/jsm/controls/OrbitControls.js",
+          "GLTFLoader": "./adler/examples/jsm/loaders/GLTFLoader.js",
+          "DRACOLoader": "./adler/examples/jsm/loaders/DRACOLoader.js",
+          "KTX2Loader": "./adler/examples/jsm/loaders/KTX2Loader.js"
         }
       }
     </script>
@@ -70,7 +50,50 @@
     import { DRACOLoader } from "DRACOLoader";
     import { KTX2Loader } from "KTX2Loader";
 
-    const canvas = document.getElementById("webgl");
+    const container = document.querySelector("#adler-container");
+    const canvas = document.querySelector("#adler-canvas");
+    const loadingBar = document.querySelector("#adler-loading-bar");
+    const progressBarFull = document.querySelector(
+      "#adler-progress-bar-full"
+    );
+    const fullscreenButton = document.querySelector(
+      "#adler-fullscreen-button"
+    );
+    const warningBanner = document.querySelector("#adler-warning");
+
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+      // Mobile device style: fill the whole browser client area with the game canvas:
+
+      const meta = document.createElement("meta");
+      meta.name = "viewport";
+      meta.content =
+        "width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes";
+      document.getElementsByTagName("head")[0].appendChild(meta);
+      container.className = "adler-mobile";
+      canvas.className = "adler-mobile";
+
+      // To lower canvas resolution on mobile devices to gain some
+      // performance, uncomment the following line:
+      // config.devicePixelRatio = 1;
+    } else {
+      // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
+
+      canvas.style.width = "960px";
+      canvas.style.height = "600px";
+    }
+
+    fullscreenButton.onclick = () => {
+      if (canvas.requestFullscreen) {
+        canvas.requestFullscreen();
+      } else if (canvas.webkitRequestFullscreen) {
+        /* Safari */
+        canvas.webkitRequestFullscreen();
+      } else if (canvas.msRequestFullscreen) {
+        /* IE11 */
+        canvas.msRequestFullscreen();
+      }
+    };
+
     const scene = new THREE.Scene();
 
     /**
@@ -82,8 +105,8 @@
       antialias: true,
     });
     const sizes = {
-      width: window.innerWidth,
-      height: window.innerHeight,
+      width: canvas.clientWidth,
+      height: canvas.clientHeight,
     };
     renderer.setClearAlpha(0);
     renderer.setSize(sizes.width, sizes.height);
@@ -122,23 +145,22 @@
      */
     const loadingManager = new THREE.LoadingManager();
     loadingManager.onProgress = (url, itemsLoaded, itemsTotal) => {
-      if (itemsLoaded / itemsTotal === 1) {
-        setTimeout(() => {
-          document.getElementById("loadingProgress").style.display = "none";
-        }, 1000);
-      }
-      document.getElementById("loadingProgress").innerHTML =
-        (itemsLoaded / itemsTotal) * 100 + "%";
+      // if (itemsLoaded / itemsTotal === 1) {
+      //   setTimeout(() => {
+      //     loadingBar.style.display = "none";
+      //   }, 1000);
+      // }
+      progressBarFull.style.width = (itemsLoaded / itemsTotal) * 100 + "%";
     };
 
     /**
      * GLTF
      */
     const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath("./threejs/loaders/draco/");
+    dracoLoader.setDecoderPath("./adler/loaders/draco/");
 
     const ktx2Loader = new KTX2Loader();
-    ktx2Loader.setTranscoderPath("./threejs/loaders/basis/");
+    ktx2Loader.setTranscoderPath("./adler/loaders/basis/");
     ktx2Loader.detectSupport(renderer);
 
     const gltfLoader = new GLTFLoader(loadingManager);
@@ -206,8 +228,8 @@
      */
     window.addEventListener("resize", () => {
       // Update sizes
-      sizes.width = window.innerWidth;
-      sizes.height = window.innerHeight;
+      sizes.width = canvas.clientWidth;
+      sizes.height = canvas.clientHeight;
 
       // Update camera
       camera.aspect = sizes.width / sizes.height;

@@ -1,0 +1,16 @@
+body { padding: 0; margin: 0 }
+#adler-container { position: absolute }
+#adler-container.adler-desktop { left: 50%; top: 50%; transform: translate(-50%, -50%) }
+#adler-container.adler-mobile { position: fixed; width: 100%; height: 100% }
+#adler-canvas { background: #231F20 }
+.adler-mobile #adler-canvas { width: 100%; height: 100% }
+#adler-loading-bar { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: none }
+#adler-logo { width: 154px; height: 130px; background: url('adler-logo.png') no-repeat center }
+#adler-progress-bar-empty { width: 141px; height: 18px; margin-top: 10px; margin-left: 6.5px; background: url('progress-bar-empty-dark.png') no-repeat center }
+#adler-progress-bar-full { width: 0%; height: 18px; margin-top: 10px; background: url('progress-bar-full-dark.png') no-repeat center }
+#adler-footer { position: relative }
+.adler-mobile #adler-footer { display: none }
+#adler-webgl-logo { float:left; width: 204px; height: 38px; background: url('webgl-logo.png') no-repeat center }
+#adler-build-title { float: right; margin-right: 10px; line-height: 38px; font-family: arial; font-size: 18px }
+#adler-fullscreen-button { cursor:pointer; float: right; width: 38px; height: 38px; background: url('fullscreen-button.png') no-repeat center }
+#adler-warning { position: absolute; left: 50%; top: 5%; transform: translate(-50%); background: white; padding: 10px; display: none }
