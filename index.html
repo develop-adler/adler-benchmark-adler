@@ -50,6 +50,7 @@
     import { DRACOLoader } from "DRACOLoader";
     import { KTX2Loader } from "KTX2Loader";
 
+    let isMobile = false;
     const container = document.querySelector("#adler-container");
     const canvas = document.querySelector("#adler-canvas");
     const loadingBar = document.querySelector("#adler-loading-bar");
@@ -62,6 +63,7 @@
     const warningBanner = document.querySelector("#adler-warning");
 
     if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+      isMobile = true;
       // Mobile device style: fill the whole browser client area with the game canvas:
 
       const meta = document.createElement("meta");
@@ -107,8 +109,12 @@
       antialias: true,
     });
     const sizes = {
-      width: canvas.clientWidth,
-      height: canvas.clientHeight,
+      width: isMobile
+        ? window.innerWidth
+        : canvas.clientWidth,
+      height: isMobile
+        ? window.innerHeight
+        : canvas.clientHeight,
     };
     renderer.setClearAlpha(0);
     renderer.setSize(sizes.width, sizes.height);
@@ -223,13 +229,15 @@
       });
     });
 
-    /**
-     * Sizes
-     */
-    window.addEventListener("resize", () => {
+    const resize = () => {
       // Update sizes
-      sizes.width = canvas.clientWidth;
-      sizes.height = canvas.clientHeight;
+      if (isMobile) {
+        sizes.width = window.innerWidth;
+        sizes.height = window.innerHeight;
+      } else {
+        sizes.width = canvas.scrollWidth;
+        sizes.height = canvas.scrollHeight;
+      }
 
       // Update camera
       camera.aspect = sizes.width / sizes.height;
@@ -238,7 +246,12 @@
       // Update renderer
       renderer.setSize(sizes.width, sizes.height);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    });
+    };
+
+    /**
+     * Sizes
+     */
+    window.addEventListener("resize", resize);
 
     /**
      * Camera
