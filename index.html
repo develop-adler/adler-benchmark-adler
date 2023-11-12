@@ -57,6 +57,8 @@
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.VSMShadowMap;
         renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1;
 
         /**
          * Textures
@@ -114,7 +116,7 @@
         dirLight.shadow.camera.top = d;
         dirLight.shadow.camera.right = d;
         dirLight.shadow.camera.bottom = -d;
-        dirLight.position.set(-10, 35, -30);
+        dirLight.position.set(-15, 35, -30);
         dirLight.bias = 0.0008;
         dirLight.castShadow = true;
 
