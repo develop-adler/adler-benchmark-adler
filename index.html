@@ -28,7 +28,7 @@
   <!-- "KTX2Loader": "./adler/examples/jsm/loaders/KTX2Loader.js" -->
 
   <script type="module">
-    import * as THREE from "three";
+    import * as ADLER from "three";
     import { OrbitControls } from "OrbitControls";
     import { GLTFLoader } from "GLTFLoader";
     import { DRACOLoader } from "DRACOLoader";
@@ -96,12 +96,12 @@
 
     // loadingBar.style.display = "block";
 
-    const scene = new THREE.Scene();
+    const scene = new ADLER.Scene();
 
     /**
      * Renderer
      */
-    const renderer = new THREE.WebGLRenderer({
+    const renderer = new ADLER.WebGLRenderer({
       canvas: canvas,
       alpha: true,
       antialias: true,
@@ -114,16 +114,16 @@
     renderer.setSize(sizes.width, sizes.height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.shadowMap.type = ADLER.PCFSoftShadowMap;
+    renderer.outputColorSpace = ADLER.SRGBColorSpace;
+    renderer.toneMapping = ADLER.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1;
 
     /**
      * Textures
      */
-    // const textureLoader = new THREE.TextureLoader();
-    const cubeTextureLoader = new THREE.CubeTextureLoader();
+    // const textureLoader = new ADLER.TextureLoader();
+    const cubeTextureLoader = new ADLER.CubeTextureLoader();
 
     // load skybox
     const environmentMap = cubeTextureLoader.load([
@@ -134,7 +134,7 @@
       "./assets/envMap/pz.jpg",
       "./assets/envMap/nz.jpg",
     ]);
-    environmentMap.colorSpace = THREE.SRGBColorSpace;
+    environmentMap.colorSpace = ADLER.SRGBColorSpace;
     scene.background = environmentMap;
     scene.environment = environmentMap;
 
@@ -142,7 +142,7 @@
      * Camera
      */
     // Base camera
-    const camera = new THREE.PerspectiveCamera(
+    const camera = new ADLER.PerspectiveCamera(
       45,
       sizes.width / sizes.height,
       0.1,
@@ -162,10 +162,10 @@
     /**
      * Lights
      */
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    const ambientLight = new ADLER.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 5);
+    const dirLight = new ADLER.DirectionalLight(0xffffff, 5);
     dirLight.shadow.mapSize.set(2048, 2048);
     dirLight.shadow.camera.near = 5;
     dirLight.shadow.camera.far = 80;
@@ -184,7 +184,7 @@
     /**
      * Loading
      */
-    const loadingManager = new THREE.LoadingManager();
+    const loadingManager = new ADLER.LoadingManager();
     loadingManager.onProgress = (_url, itemsLoaded, itemsTotal) => {
       // const progress = (itemsLoaded / itemsTotal) * 100;
       // if (progressCallback) progressCallback(progress);
