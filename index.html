@@ -11,8 +11,8 @@
 </head>
 
 <body>
-  <div id="adler-container" class="adler-mobile">
-    <h1 style="display: fixed; color: white">Adler</h1>
+  <div id="adler-container" style="width: 100vw; height: 100vh">
+    <span style="display: fixed; font-size: xx-large; opacity: 0.1">i</span>
   </div>
 
   <script type="importmap">
@@ -34,228 +34,7 @@
     import { DRACOLoader } from "DRACOLoader";
     // import { KTX2Loader } from "KTX2Loader";
 
-    let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const createAdlerScene = (canvas, progressCallback) => {
-      return new Promise((resolve, reject) => {
-        const scene = new THREE.Scene();
-
-        /**
-         * Renderer
-         */
-        const renderer = new THREE.WebGLRenderer({
-          canvas: canvas,
-          alpha: true,
-          antialias: true,
-        });
-        const sizes = {
-          width: isMobile ? window.innerWidth : canvas.clientWidth,
-          height: isMobile ? window.innerHeight : canvas.clientHeight,
-        };
-        renderer.setClearAlpha(0);
-        renderer.setSize(sizes.width, sizes.height);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        renderer.outputColorSpace = THREE.SRGBColorSpace;
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1;
-
-        /**
-         * Textures
-         */
-        // const textureLoader = new THREE.TextureLoader();
-        const cubeTextureLoader = new THREE.CubeTextureLoader();
-
-        // load skybox
-        const environmentMap = cubeTextureLoader.load([
-          "./assets/envMap/px.jpg",
-          "./assets/envMap/nx.jpg",
-          "./assets/envMap/py.jpg",
-          "./assets/envMap/ny.jpg",
-          "./assets/envMap/pz.jpg",
-          "./assets/envMap/nz.jpg",
-        ]);
-        environmentMap.colorSpace = THREE.SRGBColorSpace;
-        scene.background = environmentMap;
-        scene.environment = environmentMap;
-
-        /**
-         * Camera
-         */
-        // Base camera
-        const camera = new THREE.PerspectiveCamera(
-          45,
-          sizes.width / sizes.height,
-          0.1,
-          100
-        );
-        camera.position.set(-10, 10, 30);
-        scene.add(camera);
-
-        // Controls
-        const controls = new OrbitControls(camera, canvas);
-        controls.enableDamping = true;
-        controls.enablePan = false;
-        controls.target.set(0, 5, 0);
-        controls.minDistance = 3;
-        controls.maxDistance = 50;
-
-        /**
-         * Lights
-         */
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-        scene.add(ambientLight);
-
-        const dirLight = new THREE.DirectionalLight(0xffffff, 5);
-        dirLight.shadow.mapSize.set(2048, 2048);
-        dirLight.shadow.camera.near = 5;
-        dirLight.shadow.camera.far = 80;
-
-        const d = 50;
-        dirLight.shadow.camera.left = -d;
-        dirLight.shadow.camera.top = d;
-        dirLight.shadow.camera.right = d;
-        dirLight.shadow.camera.bottom = -d;
-        dirLight.position.set(-15, 35, -30);
-        dirLight.shadow.normalBias = 0.08;
-        dirLight.castShadow = true;
-
-        scene.add(dirLight);
-
-        /**
-         * Loading
-         */
-        const loadingManager = new THREE.LoadingManager();
-        loadingManager.onProgress = (_url, itemsLoaded, itemsTotal) => {
-          const progress = (itemsLoaded / itemsTotal) * 100;
-          if (progressCallback) progressCallback(progress);
-          if (itemsLoaded / itemsTotal >= 0.98) {
-            tick();
-            resolve(renderer);
-          }
-          // progressBarFull.style.width = progress + "%";
-        };
-
-        /**
-         * GLTF
-         */
-        const dracoLoader = new DRACOLoader();
-        dracoLoader.setDecoderPath("./adler/loaders/draco/");
-
-        // const ktx2Loader = new KTX2Loader();
-        // ktx2Loader.setTranscoderPath("./adler/loaders/basis/");
-        // ktx2Loader.detectSupport(renderer);
-
-        const gltfLoader = new GLTFLoader(loadingManager);
-        gltfLoader.setDRACOLoader(dracoLoader);
-        // gltfLoader.setKTX2Loader(ktx2Loader);
-
-        gltfLoader.load(
-          "./assets/models/modern_preview_for_unity.glb",
-          (gltf) => {
-            gltf.scene.traverse((mesh) => {
-              if (mesh.isMesh) {
-                if (
-                  mesh.name.includes("Pannel") &&
-                  mesh.name.includes("_2")
-                ) {
-                  mesh.castShadow = false;
-                  mesh.receiveShadow = false;
-                } else {
-                  mesh.receiveShadow = true;
-                  mesh.castShadow = true;
-                }
-              }
-            });
-            scene.add(gltf.scene);
-
-            // ktx2Loader.load("./assets/textures/emissive.ktx2", (texture) => {
-            //   texture.colorSpace = THREE.SRGBColorSpace;
-            //   const ceilingTop = scene.getObjectByName("CeilingTop");
-            //   ceilingTop.material.map = texture;
-            //   ceilingTop.material.emissive = new THREE.Color(0xffffff);
-            //   ceilingTop.material.emissiveIntensity = 1;
-            // });
-
-            // ktx2Loader.load("./assets/textures/marble.ktx2", (texture) => {
-            //   texture.colorSpace = THREE.SRGBColorSpace;
-            //   const floor = scene.getObjectByName("Floor");
-            //   floor.material.map = texture;
-            // });
-
-            // ktx2Loader.load(
-            //   "./assets/textures/cementLarge.ktx2",
-            //   (texture) => {
-            //     texture.colorSpace = THREE.SRGBColorSpace;
-            //     const sandbox = scene.getObjectByName("Sandbox");
-            //     sandbox.material.map = texture;
-            //   }
-            // );
-          }
-        );
-
-        // gltfLoader.load("./assets/models/lowTable.glb", (gltf) => {
-        //   gltf.scene.children.forEach((mesh) => {
-        //     mesh.castShadow = true;
-        //     mesh.receiveShadow = true;
-        //     scene.add(mesh);
-        //   });
-        // });
-
-        // gltfLoader.load("./assets/models/blueSofa.glb", (gltf) => {
-        //   gltf.scene.children.forEach((mesh) => {
-        //     mesh.castShadow = true;
-        //     mesh.receiveShadow = true;
-        //     scene.add(mesh);
-
-        //     const sofa2 = new THREE.InstancedMesh(
-        //       mesh.geometry,
-        //       mesh.material,
-        //       1
-        //     );
-        //     sofa2.rotation.y = -Math.PI * 0.5;
-        //     sofa2.position.x = 1.5;
-        //     sofa2.position.y = 0.435;
-        //     scene.add(sofa2);
-        //   });
-        // });
-
-        const resize = () => {
-          // Update sizes
-          if (isMobile) {
-            sizes.width = window.innerWidth;
-            sizes.height = window.innerHeight;
-          } else {
-            sizes.width = canvas.scrollWidth;
-            sizes.height = canvas.scrollHeight;
-          }
-
-          // Update camera
-          camera.aspect = sizes.width / sizes.height;
-          camera.updateProjectionMatrix();
-
-          // Update renderer
-          renderer.setSize(sizes.width, sizes.height);
-          renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        };
-
-        /**
-         * Sizes
-         */
-        window.addEventListener("resize", resize);
-
-        const tick = () => {
-          // Update controls
-          controls.update();
-
-          // Render
-          renderer.render(scene, camera);
-
-          // Call tick again on the next frame
-          window.requestAnimationFrame(tick);
-        };
-      });
-    };
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
     if (isMobile) {
       const bodyElem = `
@@ -264,24 +43,30 @@
         </div>
       `;
       document.body.innerHTML = bodyElem;
+
+      const meta = document.createElement("meta");
+      meta.name = "viewport";
+      meta.content =
+        "width=device-width, height=device-height, initial-scale=1.0, user-scalable=yes, shrink-to-fit=yes";
+      document.getElementsByTagName("head")[0].appendChild(meta);
     } else {
       const bodyElem = `
         <div id="adler-container" class="adler-desktop">
           <canvas id="adler-canvas" width="960" height="600" tabindex="-1" style="width: 960px; height: 600px;"></canvas>
-          <!-- <div id="adler-loading-bar">
-            <div id="adler-logo"></div>
-            <div id="adler-progress-bar-empty">
-              <div id="adler-progress-bar-full"></div>
-            </div>
-          </div> -->
           <div id="adler-footer">
-            <!-- <div id="adler-webgl-logo"></div> -->
             <div id="adler-fullscreen-button"></div>
             <div id="adler-build-title">Adler Scene</div>
           </div>
         </div>
       `;
       document.body.innerHTML = bodyElem;
+
+      // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
+      const meta = document.createElement("meta");
+      meta.name = "viewport";
+      meta.content =
+        "width=device-width, height=device-height, initial-scale=1.0, user-scalable=yes, shrink-to-fit=yes";
+      document.getElementsByTagName("head")[0].appendChild(meta);
     }
 
     const container = document.querySelector("#adler-container");
@@ -294,23 +79,6 @@
       "#adler-fullscreen-button"
     );
     const footer = document.querySelector("#adler-footer");
-
-    if (isMobile) {
-      // Mobile device style: fill the whole browser client area with the game canvas:
-
-      const meta = document.createElement("meta");
-      meta.name = "viewport";
-      meta.content =
-        "width=device-width, height=device-height, initial-scale=1.0, user-scalable=yes, shrink-to-fit=yes";
-      document.getElementsByTagName("head")[0].appendChild(meta);
-    } else {
-      // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
-      const meta = document.createElement("meta");
-      meta.name = "viewport";
-      meta.content =
-        "width=device-width, height=device-height, initial-scale=1.0, user-scalable=yes, shrink-to-fit=yes";
-      document.getElementsByTagName("head")[0].appendChild(meta);
-    }
 
     if (fullscreenButton) {
       fullscreenButton.onclick = () => {
@@ -328,14 +96,173 @@
 
     // loadingBar.style.display = "block";
 
-    createAdlerScene(canvas, (progress) => {
-      // progressBarFull.style.width = 100 * progress + "%";
-    }).then(() => {
-      // loadingBar.style.display = "none";
+    const scene = new THREE.Scene();
+
+    /**
+     * Renderer
+     */
+    const renderer = new THREE.WebGLRenderer({
+      canvas: canvas,
+      alpha: true,
+      antialias: true,
     });
-    // .catch((message) => {
-    //   alert(message);
-    // });
+    const sizes = {
+      width: isMobile ? window.innerWidth : canvas.clientWidth,
+      height: isMobile ? window.innerHeight : canvas.clientHeight,
+    };
+    renderer.setClearAlpha(0);
+    renderer.setSize(sizes.width, sizes.height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1;
+
+    /**
+     * Textures
+     */
+    // const textureLoader = new THREE.TextureLoader();
+    const cubeTextureLoader = new THREE.CubeTextureLoader();
+
+    // load skybox
+    const environmentMap = cubeTextureLoader.load([
+      "./assets/envMap/px.jpg",
+      "./assets/envMap/nx.jpg",
+      "./assets/envMap/py.jpg",
+      "./assets/envMap/ny.jpg",
+      "./assets/envMap/pz.jpg",
+      "./assets/envMap/nz.jpg",
+    ]);
+    environmentMap.colorSpace = THREE.SRGBColorSpace;
+    scene.background = environmentMap;
+    scene.environment = environmentMap;
+
+    /**
+     * Camera
+     */
+    // Base camera
+    const camera = new THREE.PerspectiveCamera(
+      45,
+      sizes.width / sizes.height,
+      0.1,
+      100
+    );
+    camera.position.set(-10, 10, 30);
+    scene.add(camera);
+
+    // Controls
+    const controls = new OrbitControls(camera, canvas);
+    controls.enableDamping = true;
+    controls.enablePan = false;
+    controls.target.set(0, 5, 0);
+    controls.minDistance = 3;
+    controls.maxDistance = 50;
+
+    /**
+     * Lights
+     */
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 5);
+    dirLight.shadow.mapSize.set(2048, 2048);
+    dirLight.shadow.camera.near = 5;
+    dirLight.shadow.camera.far = 80;
+
+    const d = 50;
+    dirLight.shadow.camera.left = -d;
+    dirLight.shadow.camera.top = d;
+    dirLight.shadow.camera.right = d;
+    dirLight.shadow.camera.bottom = -d;
+    dirLight.position.set(-15, 35, -30);
+    dirLight.shadow.normalBias = 0.08;
+    dirLight.castShadow = true;
+
+    scene.add(dirLight);
+
+    /**
+     * Loading
+     */
+    const loadingManager = new THREE.LoadingManager();
+    loadingManager.onProgress = (_url, itemsLoaded, itemsTotal) => {
+      // const progress = (itemsLoaded / itemsTotal) * 100;
+      // if (progressCallback) progressCallback(progress);
+      if (itemsLoaded / itemsTotal >= 0.999) {
+        tick();
+      }
+      // progressBarFull.style.width = progress + "%";
+    };
+
+    /**
+     * GLTF
+     */
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath("./adler/loaders/draco/");
+
+    // const ktx2Loader = new KTX2Loader();
+    // ktx2Loader.setTranscoderPath("./adler/loaders/basis/");
+    // ktx2Loader.detectSupport(renderer);
+
+    const gltfLoader = new GLTFLoader(loadingManager);
+    gltfLoader.setDRACOLoader(dracoLoader);
+    // gltfLoader.setKTX2Loader(ktx2Loader);
+
+    gltfLoader.load(
+      "./assets/models/modern_preview_for_unity.glb",
+      (gltf) => {
+        gltf.scene.traverse((mesh) => {
+          if (mesh.isMesh) {
+            if (
+              mesh.name.includes("Pannel") &&
+              mesh.name.includes("_2")
+            ) {
+              mesh.castShadow = false;
+              mesh.receiveShadow = false;
+            } else {
+              mesh.receiveShadow = true;
+              mesh.castShadow = true;
+            }
+          }
+        });
+        scene.add(gltf.scene);
+      }
+    );
+
+    const resize = () => {
+      // Update sizes
+      if (isMobile) {
+        sizes.width = window.innerWidth;
+        sizes.height = window.innerHeight;
+      } else {
+        sizes.width = canvas.scrollWidth;
+        sizes.height = canvas.scrollHeight;
+      }
+
+      // Update camera
+      camera.aspect = sizes.width / sizes.height;
+      camera.updateProjectionMatrix();
+
+      // Update renderer
+      renderer.setSize(sizes.width, sizes.height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    };
+
+    /**
+     * Sizes
+     */
+    window.addEventListener("resize", resize);
+
+    const tick = () => {
+      // Update controls
+      controls.update();
+
+      // Render
+      renderer.render(scene, camera);
+
+      // Call tick again on the next frame
+      window.requestAnimationFrame(tick);
+    };
   </script>
 </body>
 

@@ -1,7 +1,7 @@
 body { padding: 0; margin: 0 }
 #adler-container { position: absolute }
 #adler-container.adler-desktop { left: 50%; top: 50%; transform: translate(-50%, -50%) }
-#adler-container.adler-mobile { position: fixed; width: 100%; height: 100% }
+#adler-container.adler-mobile { position: fixed; width: 100vw; height: 100vh }
 #adler-canvas { background: #231F20 }
 .adler-mobile #adler-canvas { width: 100vw; height: 100vh }
 #adler-loading-bar { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: block }
