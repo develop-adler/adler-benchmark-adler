@@ -184,31 +184,31 @@
           }
         );
 
-        gltfLoader.load("./assets/models/lowTable.glb", (gltf) => {
-          gltf.scene.children.forEach((mesh) => {
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
-            scene.add(mesh);
-          });
-        });
+        // gltfLoader.load("./assets/models/lowTable.glb", (gltf) => {
+        //   gltf.scene.children.forEach((mesh) => {
+        //     mesh.castShadow = true;
+        //     mesh.receiveShadow = true;
+        //     scene.add(mesh);
+        //   });
+        // });
 
-        gltfLoader.load("./assets/models/blueSofa.glb", (gltf) => {
-          gltf.scene.children.forEach((mesh) => {
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
-            scene.add(mesh);
+        // gltfLoader.load("./assets/models/blueSofa.glb", (gltf) => {
+        //   gltf.scene.children.forEach((mesh) => {
+        //     mesh.castShadow = true;
+        //     mesh.receiveShadow = true;
+        //     scene.add(mesh);
 
-            const sofa2 = new THREE.InstancedMesh(
-              mesh.geometry,
-              mesh.material,
-              1
-            );
-            sofa2.rotation.y = -Math.PI * 0.5;
-            sofa2.position.x = 1.5;
-            sofa2.position.y = 0.435;
-            scene.add(sofa2);
-          });
-        });
+        //     const sofa2 = new THREE.InstancedMesh(
+        //       mesh.geometry,
+        //       mesh.material,
+        //       1
+        //     );
+        //     sofa2.rotation.y = -Math.PI * 0.5;
+        //     sofa2.position.x = 1.5;
+        //     sofa2.position.y = 0.435;
+        //     scene.add(sofa2);
+        //   });
+        // });
 
         const resize = () => {
           // Update sizes
