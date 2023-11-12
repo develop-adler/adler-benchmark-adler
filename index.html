@@ -21,18 +21,18 @@
           "three": "./adler/build/adler.module.min.js",
           "OrbitControls": "./adler/examples/jsm/controls/OrbitControls.js",
           "GLTFLoader": "./adler/examples/jsm/loaders/GLTFLoader.js",
-          "DRACOLoader": "./adler/examples/jsm/loaders/DRACOLoader.js",
-          "KTX2Loader": "./adler/examples/jsm/loaders/KTX2Loader.js"
+          "DRACOLoader": "./adler/examples/jsm/loaders/DRACOLoader.js"
         }
       }
     </script>
+  <!-- "KTX2Loader": "./adler/examples/jsm/loaders/KTX2Loader.js" -->
 
   <script type="module">
     import * as THREE from "three";
     import { OrbitControls } from "OrbitControls";
     import { GLTFLoader } from "GLTFLoader";
     import { DRACOLoader } from "DRACOLoader";
-    import { KTX2Loader } from "KTX2Loader";
+    // import { KTX2Loader } from "KTX2Loader";
 
     let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const createAdlerScene = (canvas, progressCallback) => {
@@ -142,13 +142,13 @@
         const dracoLoader = new DRACOLoader();
         dracoLoader.setDecoderPath("./adler/loaders/draco/");
 
-        const ktx2Loader = new KTX2Loader();
-        ktx2Loader.setTranscoderPath("./adler/loaders/basis/");
-        ktx2Loader.detectSupport(renderer);
+        // const ktx2Loader = new KTX2Loader();
+        // ktx2Loader.setTranscoderPath("./adler/loaders/basis/");
+        // ktx2Loader.detectSupport(renderer);
 
         const gltfLoader = new GLTFLoader(loadingManager);
         gltfLoader.setDRACOLoader(dracoLoader);
-        gltfLoader.setKTX2Loader(ktx2Loader);
+        // gltfLoader.setKTX2Loader(ktx2Loader);
 
         gltfLoader.load(
           "./assets/models/modern_preview_for_unity.glb",
