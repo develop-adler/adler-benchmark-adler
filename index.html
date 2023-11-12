@@ -13,6 +13,7 @@
 <body>
   <div id="adler-container" class="adler-desktop">
     <canvas id="adler-canvas"></canvas>
+    <span>forlighthouse</span>
     <!-- <div id="adler-loading-bar">
       <div id="adler-logo"></div>
       <div id="adler-progress-bar-empty">
@@ -20,7 +21,7 @@
       </div>
     </div> -->
     <!-- <div id="adler-warning"></div> -->
-    <div id="adler-footer">
+    <div id="adler-footer" style="display: none;">
       <!-- <div id="adler-webgl-logo"></div> -->
       <div id="adler-fullscreen-button"></div>
       <div id="adler-build-title">Adler Scene</div>
@@ -288,6 +289,8 @@
       meta.content =
         "width=device-width, height=device-height, initial-scale=1.0, user-scalable=yes, shrink-to-fit=yes";
       document.getElementsByTagName("head")[0].appendChild(meta);
+
+      footer.style.display = "block";
 
       canvas.style.width = "960px";
       canvas.style.height = "600px";
