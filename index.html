@@ -10,11 +10,6 @@
 </head>
 
 <body>
-  <!-- <div class="webgl-container">
-    <h1 id="loadingProgress"></h1>
-    <canvas id="webgl"></canvas>
-  </div> -->
-
   <div id="adler-container" class="adler-desktop">
     <canvas id="adler-canvas" width="960" height="600" tabindex="-1"></canvas>
     <div id="adler-loading-bar">
@@ -50,7 +45,205 @@
     import { DRACOLoader } from "DRACOLoader";
     import { KTX2Loader } from "KTX2Loader";
 
-    let isMobile = false;
+    let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const createAdlerScene = (canvas, progressCallback) => {
+      return new Promise((resolve, reject) => {
+        const scene = new THREE.Scene();
+
+        /**
+         * Renderer
+         */
+        const renderer = new THREE.WebGLRenderer({
+          canvas: canvas,
+          alpha: true,
+          antialias: true,
+        });
+        const sizes = {
+          width: isMobile ? window.innerWidth : canvas.clientWidth,
+          height: isMobile ? window.innerHeight : canvas.clientHeight,
+        };
+        renderer.setClearAlpha(0);
+        renderer.setSize(sizes.width, sizes.height);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+        /**
+         * Textures
+         */
+        // const textureLoader = new THREE.TextureLoader();
+        const cubeTextureLoader = new THREE.CubeTextureLoader();
+
+        // load skybox
+        const environmentMap = cubeTextureLoader.load([
+          "./assets/envMap/px.jpg",
+          "./assets/envMap/nx.jpg",
+          "./assets/envMap/py.jpg",
+          "./assets/envMap/ny.jpg",
+          "./assets/envMap/pz.jpg",
+          "./assets/envMap/nz.jpg",
+        ]);
+        environmentMap.colorSpace = THREE.SRGBColorSpace;
+        scene.background = environmentMap;
+        scene.environment = environmentMap;
+
+        /**
+         * Lights
+         */
+        const ambientLight = new THREE.AmbientLight(0xffffff, 3);
+        scene.add(ambientLight);
+
+        /**
+         * Loading
+         */
+        const loadingManager = new THREE.LoadingManager();
+        loadingManager.onProgress = (_url, itemsLoaded, itemsTotal) => {
+          const progress = (itemsLoaded / itemsTotal) * 100;
+          if (progressCallback) progressCallback(progress);
+          if (itemsLoaded / itemsTotal >= 0.98) {
+            resolve(scene);
+          }
+          progressBarFull.style.width = progress + "%";
+        };
+
+        /**
+         * GLTF
+         */
+        const dracoLoader = new DRACOLoader();
+        dracoLoader.setDecoderPath("./adler/loaders/draco/");
+
+        const ktx2Loader = new KTX2Loader();
+        ktx2Loader.setTranscoderPath("./adler/loaders/basis/");
+        ktx2Loader.detectSupport(renderer);
+
+        const gltfLoader = new GLTFLoader(loadingManager);
+        gltfLoader.setDRACOLoader(dracoLoader);
+        gltfLoader.setKTX2Loader(ktx2Loader);
+
+        gltfLoader.load(
+          "./assets/models/modern_preview_for_unity.glb",
+          (gltf) => {
+            scene.add(gltf.scene);
+
+            // ktx2Loader.load("./assets/textures/emissive.ktx2", (texture) => {
+            //   texture.colorSpace = THREE.SRGBColorSpace;
+            //   const ceilingTop = scene.getObjectByName("CeilingTop");
+            //   ceilingTop.material.map = texture;
+            //   ceilingTop.material.emissive = new THREE.Color(0xffffff);
+            //   ceilingTop.material.emissiveIntensity = 1;
+            // });
+
+            // ktx2Loader.load("./assets/textures/marble.ktx2", (texture) => {
+            //   texture.colorSpace = THREE.SRGBColorSpace;
+            //   const floor = scene.getObjectByName("Floor");
+            //   floor.material.map = texture;
+            // });
+
+            // ktx2Loader.load(
+            //   "./assets/textures/cementLarge.ktx2",
+            //   (texture) => {
+            //     texture.colorSpace = THREE.SRGBColorSpace;
+            //     const sandbox = scene.getObjectByName("Sandbox");
+            //     sandbox.material.map = texture;
+            //   }
+            // );
+          }
+        );
+
+        gltfLoader.load("./assets/models/lowTable.glb", (gltf) => {
+          gltf.scene.children.forEach((mesh) => {
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            scene.add(mesh);
+          });
+        });
+
+        gltfLoader.load("./assets/models/blueSofa.glb", (gltf) => {
+          gltf.scene.children.forEach((mesh) => {
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            scene.add(mesh);
+
+            const sofa2 = new THREE.InstancedMesh(
+              mesh.geometry,
+              mesh.material,
+              1
+            );
+            sofa2.rotation.y = -Math.PI * 0.5;
+            sofa2.position.x = 1.5;
+            sofa2.position.y = 0.435;
+            scene.add(sofa2);
+          });
+        });
+
+        const resize = () => {
+          // Update sizes
+          if (isMobile) {
+            sizes.width = window.innerWidth;
+            sizes.height = window.innerHeight;
+          } else {
+            sizes.width = canvas.scrollWidth;
+            sizes.height = canvas.scrollHeight;
+          }
+
+          // Update camera
+          camera.aspect = sizes.width / sizes.height;
+          camera.updateProjectionMatrix();
+
+          // Update renderer
+          renderer.setSize(sizes.width, sizes.height);
+          renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        };
+
+        /**
+         * Sizes
+         */
+        window.addEventListener("resize", resize);
+
+        /**
+         * Camera
+         */
+        // Base camera
+        const camera = new THREE.PerspectiveCamera(
+          45,
+          sizes.width / sizes.height,
+          0.1,
+          100
+        );
+        camera.position.set(-10, 10, 30);
+        scene.add(camera);
+
+        // Controls
+        const controls = new OrbitControls(camera, canvas);
+        controls.enableDamping = true;
+        controls.enablePan = false;
+        controls.target.set(0, 5, 0);
+        controls.minDistance = 3;
+        controls.maxDistance = 50;
+
+        // const clock = new THREE.Clock();
+        // let oldElapsedTime = 0;
+
+        const tick = () => {
+          // const elapsedTime = clock.getElapsedTime();
+          // const deltaTime = elapsedTime - oldElapsedTime;
+          // oldElapsedTime = elapsedTime;
+
+          // Update controls
+          controls.update();
+
+          // Render
+          renderer.render(scene, camera);
+
+          // Call tick again on the next frame
+          window.requestAnimationFrame(tick);
+        };
+
+        tick();
+      });
+    };
+
     const container = document.querySelector("#adler-container");
     const canvas = document.querySelector("#adler-canvas");
     const loadingBar = document.querySelector("#adler-loading-bar");
@@ -60,10 +253,9 @@
     const fullscreenButton = document.querySelector(
       "#adler-fullscreen-button"
     );
-    const warningBanner = document.querySelector("#adler-warning");
+    // const warningBanner = document.querySelector("#adler-warning");
 
-    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-      isMobile = true;
+    if (isMobile) {
       // Mobile device style: fill the whole browser client area with the game canvas:
 
       const meta = document.createElement("meta");
@@ -94,201 +286,14 @@
 
     loadingBar.style.display = "block";
 
-    const scene = new THREE.Scene();
-
-    /**
-     * Renderer
-     */
-    const renderer = new THREE.WebGLRenderer({
-      canvas: canvas,
-      alpha: true,
-      antialias: true,
+    createAdlerScene(canvas, (progress) => {
+      progressBarFull.style.width = 100 * progress + "%";
+    }).then(() => {
+      loadingBar.style.display = "none";
     });
-    const sizes = {
-      width: isMobile
-        ? window.innerWidth
-        : canvas.clientWidth,
-      height: isMobile
-        ? window.innerHeight
-        : canvas.clientHeight,
-    };
-    renderer.setClearAlpha(0);
-    renderer.setSize(sizes.width, sizes.height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-
-    /**
-     * Textures
-     */
-    // const textureLoader = new THREE.TextureLoader();
-    const cubeTextureLoader = new THREE.CubeTextureLoader();
-
-    // load skybox
-    const environmentMap = cubeTextureLoader.load([
-      "./assets/envMap/px.jpg",
-      "./assets/envMap/nx.jpg",
-      "./assets/envMap/py.jpg",
-      "./assets/envMap/ny.jpg",
-      "./assets/envMap/pz.jpg",
-      "./assets/envMap/nz.jpg",
-    ]);
-    environmentMap.colorSpace = THREE.SRGBColorSpace;
-    scene.background = environmentMap;
-    scene.environment = environmentMap;
-
-    /**
-     * Lights
-     */
-    const ambientLight = new THREE.AmbientLight(0xffffff, 3);
-    scene.add(ambientLight);
-
-    /**
-     * Loading
-     */
-    const loadingManager = new THREE.LoadingManager();
-    loadingManager.onProgress = (url, itemsLoaded, itemsTotal) => {
-      if (itemsLoaded / itemsTotal >= 0.98) {
-        loadingBar.style.display = "none";
-      }
-      progressBarFull.style.width = (itemsLoaded / itemsTotal) * 100 + "%";
-    };
-
-    /**
-     * GLTF
-     */
-    const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath("./adler/loaders/draco/");
-
-    const ktx2Loader = new KTX2Loader();
-    ktx2Loader.setTranscoderPath("./adler/loaders/basis/");
-    ktx2Loader.detectSupport(renderer);
-
-    const gltfLoader = new GLTFLoader(loadingManager);
-    gltfLoader.setDRACOLoader(dracoLoader);
-    gltfLoader.setKTX2Loader(ktx2Loader);
-
-    gltfLoader.load(
-      "./assets/models/modern_preview_for_unity.glb",
-      (gltf) => {
-        scene.add(gltf.scene);
-
-        // ktx2Loader.load("./assets/textures/emissive.ktx2", (texture) => {
-        //   texture.colorSpace = THREE.SRGBColorSpace;
-        //   const ceilingTop = scene.getObjectByName("CeilingTop");
-        //   ceilingTop.material.map = texture;
-        //   ceilingTop.material.emissive = new THREE.Color(0xffffff);
-        //   ceilingTop.material.emissiveIntensity = 1;
-        // });
-
-        // ktx2Loader.load("./assets/textures/marble.ktx2", (texture) => {
-        //   texture.colorSpace = THREE.SRGBColorSpace;
-        //   const floor = scene.getObjectByName("Floor");
-        //   floor.material.map = texture;
-        // });
-
-        // ktx2Loader.load(
-        //   "./assets/textures/cementLarge.ktx2",
-        //   (texture) => {
-        //     texture.colorSpace = THREE.SRGBColorSpace;
-        //     const sandbox = scene.getObjectByName("Sandbox");
-        //     sandbox.material.map = texture;
-        //   }
-        // );
-      }
-    );
-
-    gltfLoader.load("./assets/models/lowTable.glb", (gltf) => {
-      gltf.scene.children.forEach((mesh) => {
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-        scene.add(mesh);
-      });
-    });
-
-    gltfLoader.load("./assets/models/blueSofa.glb", (gltf) => {
-      gltf.scene.children.forEach((mesh) => {
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-        scene.add(mesh);
-
-        const sofa2 = new THREE.InstancedMesh(
-          mesh.geometry,
-          mesh.material,
-          1
-        );
-        sofa2.rotation.y = -Math.PI * 0.5;
-        sofa2.position.x = 1.5;
-        sofa2.position.y = 0.435;
-        scene.add(sofa2);
-      });
-    });
-
-    const resize = () => {
-      // Update sizes
-      if (isMobile) {
-        sizes.width = window.innerWidth;
-        sizes.height = window.innerHeight;
-      } else {
-        sizes.width = canvas.scrollWidth;
-        sizes.height = canvas.scrollHeight;
-      }
-
-      // Update camera
-      camera.aspect = sizes.width / sizes.height;
-      camera.updateProjectionMatrix();
-
-      // Update renderer
-      renderer.setSize(sizes.width, sizes.height);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    };
-
-    /**
-     * Sizes
-     */
-    window.addEventListener("resize", resize);
-
-    /**
-     * Camera
-     */
-    // Base camera
-    const camera = new THREE.PerspectiveCamera(
-      45,
-      sizes.width / sizes.height,
-      0.1,
-      100
-    );
-    camera.position.set(-10, 10, 30);
-    scene.add(camera);
-
-    // Controls
-    const controls = new OrbitControls(camera, canvas);
-    controls.enableDamping = true;
-    controls.enablePan = false;
-    controls.target.set(0, 5, 0);
-    controls.minDistance = 3;
-    controls.maxDistance = 50;
-
-    const clock = new THREE.Clock();
-    let oldElapsedTime = 0;
-
-    const tick = () => {
-      const elapsedTime = clock.getElapsedTime();
-      const deltaTime = elapsedTime - oldElapsedTime;
-      oldElapsedTime = elapsedTime;
-
-      // Update controls
-      controls.update();
-
-      // Render
-      renderer.render(scene, camera);
-
-      // Call tick again on the next frame
-      window.requestAnimationFrame(tick);
-    };
-
-    tick();
+    // .catch((message) => {
+    //   alert(message);
+    // });
   </script>
 </body>
 
