@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-us">
 
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="description" content="Adler benchmark">
   <title>Benchmark Adler</title>
   <link rel="shortcut icon" href="TemplateData/favicon.ico" />
   <link rel="stylesheet" href="TemplateData/style.css" />
@@ -11,16 +12,16 @@
 
 <body>
   <div id="adler-container" class="adler-desktop">
-    <canvas id="adler-canvas" width="960" height="600" tabindex="-1"></canvas>
-    <div id="adler-loading-bar">
+    <canvas id="adler-canvas"></canvas>
+    <!-- <div id="adler-loading-bar">
       <div id="adler-logo"></div>
       <div id="adler-progress-bar-empty">
         <div id="adler-progress-bar-full"></div>
       </div>
-    </div>
-    <div id="adler-warning"></div>
+    </div> -->
+    <!-- <div id="adler-warning"></div> -->
     <div id="adler-footer">
-      <div id="adler-webgl-logo"></div>
+      <!-- <div id="adler-webgl-logo"></div> -->
       <div id="adler-fullscreen-button"></div>
       <div id="adler-build-title">Adler Scene</div>
     </div>
@@ -66,7 +67,7 @@
         renderer.setSize(sizes.width, sizes.height);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.shadowMap.type = THREE.VSMShadowMap;
         renderer.outputColorSpace = THREE.SRGBColorSpace;
 
         /**
@@ -89,10 +90,47 @@
         scene.environment = environmentMap;
 
         /**
+         * Camera
+         */
+        // Base camera
+        const camera = new THREE.PerspectiveCamera(
+          45,
+          sizes.width / sizes.height,
+          0.1,
+          100
+        );
+        camera.position.set(-10, 10, 30);
+        scene.add(camera);
+
+        // Controls
+        const controls = new OrbitControls(camera, canvas);
+        controls.enableDamping = true;
+        controls.enablePan = false;
+        controls.target.set(0, 5, 0);
+        controls.minDistance = 3;
+        controls.maxDistance = 50;
+
+        /**
          * Lights
          */
-        const ambientLight = new THREE.AmbientLight(0xffffff, 3);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1);
         scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 3);
+        dirLight.shadow.mapSize.set(1024, 1024);
+        dirLight.shadow.camera.near = 5;
+        dirLight.shadow.camera.far = 80;
+
+        const d = 50;
+        dirLight.shadow.camera.left = -d;
+        dirLight.shadow.camera.top = d;
+        dirLight.shadow.camera.right = d;
+        dirLight.shadow.camera.bottom = -d;
+        dirLight.position.set(-10, 35, -30);
+        dirLight.bias = 0.0008;
+        dirLight.castShadow = true;
+
+        scene.add(dirLight);
 
         /**
          * Loading
@@ -105,7 +143,7 @@
             tick();
             resolve(renderer);
           }
-          progressBarFull.style.width = progress + "%";
+          // progressBarFull.style.width = progress + "%";
         };
 
         /**
@@ -125,6 +163,12 @@
         gltfLoader.load(
           "./assets/models/modern_preview_for_unity.glb",
           (gltf) => {
+            gltf.scene.traverse((mesh) => {
+              if (mesh.isMesh) {
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+              }
+            });
             scene.add(gltf.scene);
 
             // ktx2Loader.load("./assets/textures/emissive.ktx2", (texture) => {
@@ -202,35 +246,7 @@
          */
         window.addEventListener("resize", resize);
 
-        /**
-         * Camera
-         */
-        // Base camera
-        const camera = new THREE.PerspectiveCamera(
-          45,
-          sizes.width / sizes.height,
-          0.1,
-          100
-        );
-        camera.position.set(-10, 10, 30);
-        scene.add(camera);
-
-        // Controls
-        const controls = new OrbitControls(camera, canvas);
-        controls.enableDamping = true;
-        controls.enablePan = false;
-        controls.target.set(0, 5, 0);
-        controls.minDistance = 3;
-        controls.maxDistance = 50;
-
-        // const clock = new THREE.Clock();
-        // let oldElapsedTime = 0;
-
         const tick = () => {
-          // const elapsedTime = clock.getElapsedTime();
-          // const deltaTime = elapsedTime - oldElapsedTime;
-          // oldElapsedTime = elapsedTime;
-
           // Update controls
           controls.update();
 
@@ -245,14 +261,15 @@
 
     const container = document.querySelector("#adler-container");
     const canvas = document.querySelector("#adler-canvas");
-    const loadingBar = document.querySelector("#adler-loading-bar");
-    const progressBarFull = document.querySelector(
-      "#adler-progress-bar-full"
-    );
+    // const loadingBar = document.querySelector("#adler-loading-bar");
+    // const progressBarFull = document.querySelector(
+    //   "#adler-progress-bar-full"
+    // );
     const fullscreenButton = document.querySelector(
       "#adler-fullscreen-button"
     );
     // const warningBanner = document.querySelector("#adler-warning");
+    const footer = document.querySelector("#adler-footer");
 
     if (isMobile) {
       // Mobile device style: fill the whole browser client area with the game canvas:
@@ -260,12 +277,17 @@
       const meta = document.createElement("meta");
       meta.name = "viewport";
       meta.content =
-        "width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes";
+        "width=device-width, height=device-height, initial-scale=1.0, user-scalable=yes, shrink-to-fit=yes";
       document.getElementsByTagName("head")[0].appendChild(meta);
+
       container.className = "adler-mobile";
-      canvas.className = "adler-mobile";
     } else {
       // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
+      const meta = document.createElement("meta");
+      meta.name = "viewport";
+      meta.content =
+        "width=device-width, height=device-height, initial-scale=1.0, user-scalable=yes, shrink-to-fit=yes";
+      document.getElementsByTagName("head")[0].appendChild(meta);
 
       canvas.style.width = "960px";
       canvas.style.height = "600px";
@@ -283,12 +305,12 @@
       }
     };
 
-    loadingBar.style.display = "block";
+    // loadingBar.style.display = "block";
 
     createAdlerScene(canvas, (progress) => {
-      progressBarFull.style.width = 100 * progress + "%";
+      // progressBarFull.style.width = 100 * progress + "%";
     }).then(() => {
-      loadingBar.style.display = "none";
+      // loadingBar.style.display = "none";
     });
     // .catch((message) => {
     //   alert(message);
