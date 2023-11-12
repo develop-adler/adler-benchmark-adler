@@ -55,7 +55,7 @@
         renderer.setSize(sizes.width, sizes.height);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.VSMShadowMap;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.outputColorSpace = THREE.SRGBColorSpace;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
         renderer.toneMappingExposure = 1;
@@ -106,8 +106,8 @@
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         scene.add(ambientLight);
 
-        const dirLight = new THREE.DirectionalLight(0xffffff, 10);
-        dirLight.shadow.mapSize.set(1024, 1024);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 5);
+        dirLight.shadow.mapSize.set(2048, 2048);
         dirLight.shadow.camera.near = 5;
         dirLight.shadow.camera.far = 80;
 
@@ -117,7 +117,7 @@
         dirLight.shadow.camera.right = d;
         dirLight.shadow.camera.bottom = -d;
         dirLight.position.set(-15, 35, -30);
-        dirLight.bias = 0.0008;
+        dirLight.shadow.normalBias = 0.08;
         dirLight.castShadow = true;
 
         scene.add(dirLight);
@@ -155,8 +155,16 @@
           (gltf) => {
             gltf.scene.traverse((mesh) => {
               if (mesh.isMesh) {
-                mesh.castShadow = true;
-                mesh.receiveShadow = true;
+                if (
+                  mesh.name.includes("Pannel") &&
+                  mesh.name.includes("_2")
+                ) {
+                  mesh.castShadow = false;
+                  mesh.receiveShadow = false;
+                } else {
+                  mesh.receiveShadow = true;
+                  mesh.castShadow = true;
+                }
               }
             });
             scene.add(gltf.scene);
