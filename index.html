@@ -4,28 +4,15 @@
 <head>
   <meta charset="utf-8" />
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <meta name="description" content="Adler benchmark">
+  <meta name="description" content="Adler benchmark" />
   <title>Benchmark Adler</title>
   <link rel="shortcut icon" href="TemplateData/favicon.ico" />
   <link rel="stylesheet" href="TemplateData/style.css" />
 </head>
 
 <body>
-  <div id="adler-container" class="adler-desktop">
-    <canvas id="adler-canvas"></canvas>
-    <span>forlighthouse</span>
-    <!-- <div id="adler-loading-bar">
-      <div id="adler-logo"></div>
-      <div id="adler-progress-bar-empty">
-        <div id="adler-progress-bar-full"></div>
-      </div>
-    </div> -->
-    <!-- <div id="adler-warning"></div> -->
-    <div id="adler-footer" style="display: none;">
-      <!-- <div id="adler-webgl-logo"></div> -->
-      <div id="adler-fullscreen-button"></div>
-      <div id="adler-build-title">Adler Scene</div>
-    </div>
+  <div id="adler-container" class="adler-mobile">
+    <h1>Adler</h1>
   </div>
 
   <script type="importmap">
@@ -260,6 +247,33 @@
       });
     };
 
+    if (isMobile) {
+      const bodyElem = `
+        <div id="adler-container" class="adler-mobile">
+          <canvas id="adler-canvas"></canvas>
+        </div>
+      `;
+      document.body.innerHTML = bodyElem;
+    } else {
+      const bodyElem = `
+        <div id="adler-container" class="adler-desktop">
+          <canvas id="adler-canvas" width="960" height="600" tabindex="-1" style="width: 960px; height: 960px;"></canvas>
+          <!-- <div id="adler-loading-bar">
+            <div id="adler-logo"></div>
+            <div id="adler-progress-bar-empty">
+              <div id="adler-progress-bar-full"></div>
+            </div>
+          </div> -->
+          <div id="adler-footer">
+            <!-- <div id="adler-webgl-logo"></div> -->
+            <div id="adler-fullscreen-button"></div>
+            <div id="adler-build-title">Adler Scene</div>
+          </div>
+        </div>
+      `;
+      document.body.innerHTML = bodyElem;
+    }
+
     const container = document.querySelector("#adler-container");
     const canvas = document.querySelector("#adler-canvas");
     // const loadingBar = document.querySelector("#adler-loading-bar");
@@ -269,7 +283,6 @@
     const fullscreenButton = document.querySelector(
       "#adler-fullscreen-button"
     );
-    // const warningBanner = document.querySelector("#adler-warning");
     const footer = document.querySelector("#adler-footer");
 
     if (isMobile) {
@@ -280,8 +293,6 @@
       meta.content =
         "width=device-width, height=device-height, initial-scale=1.0, user-scalable=yes, shrink-to-fit=yes";
       document.getElementsByTagName("head")[0].appendChild(meta);
-
-      container.className = "adler-mobile";
     } else {
       // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
       const meta = document.createElement("meta");
@@ -289,24 +300,21 @@
       meta.content =
         "width=device-width, height=device-height, initial-scale=1.0, user-scalable=yes, shrink-to-fit=yes";
       document.getElementsByTagName("head")[0].appendChild(meta);
-
-      footer.style.display = "block";
-
-      canvas.style.width = "960px";
-      canvas.style.height = "600px";
     }
 
-    fullscreenButton.onclick = () => {
-      if (canvas.requestFullscreen) {
-        canvas.requestFullscreen();
-      } else if (canvas.webkitRequestFullscreen) {
-        /* Safari */
-        canvas.webkitRequestFullscreen();
-      } else if (canvas.msRequestFullscreen) {
-        /* IE11 */
-        canvas.msRequestFullscreen();
-      }
-    };
+    if (fullscreenButton) {
+      fullscreenButton.onclick = () => {
+        if (canvas.requestFullscreen) {
+          canvas.requestFullscreen();
+        } else if (canvas.webkitRequestFullscreen) {
+          /* Safari */
+          canvas.webkitRequestFullscreen();
+        } else if (canvas.msRequestFullscreen) {
+          /* IE11 */
+          canvas.msRequestFullscreen();
+        }
+      };
+    }
 
     // loadingBar.style.display = "block";
 
